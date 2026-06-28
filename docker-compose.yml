@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - CACHE_TTL_SECONDS=300
+    volumes:
+      # Persist the built DB across container restarts (rebuild with
+      # `docker compose run web python -c "from core import database; database.build_db(force=True)"`)
+      - analytics_data:/app/data/processed
+    restart: unless-stopped
+
+volumes:
+  analytics_data:

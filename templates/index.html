@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Netflix Content Strategy · Analytics Pro</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     SIDEBAR NAV
+════════════════════════════════════════════════════════════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-n">N</span>
+    <span class="logo-rest">etflix</span>
+  </div>
+  <div class="sidebar-label">Analytics Pro</div>
+  <ul class="nav-links">
+    <li><span class="nav-group-lbl">Movie Market</span></li>
+    <li><a href="#section-kpis"      class="nav-item active" data-section="kpis">      <span class="ni">📊</span><span class="nt">Overview</span></a></li>
+    <li><a href="#section-growth"    class="nav-item"        data-section="growth">    <span class="ni">📅</span><span class="nt">Growth</span></a></li>
+    <li><a href="#section-genres"    class="nav-item"        data-section="genres">    <span class="ni">🎭</span><span class="nt">Genres</span></a></li>
+    <li><a href="#section-roi"       class="nav-item"        data-section="roi">       <span class="ni">💰</span><span class="nt">ROI</span></a></li>
+    <li><a href="#section-corr"      class="nav-item"        data-section="corr">      <span class="ni">🔗</span><span class="nt">Correlations</span></a></li>
+    <li><a href="#section-lang"      class="nav-item"        data-section="lang">      <span class="ni">🗣️</span><span class="nt">Languages</span></a></li>
+    <li><a href="#section-scatter"   class="nav-item"        data-section="scatter">   <span class="ni">💎</span><span class="nt">Budget/Rev</span></a></li>
+    <li><a href="#section-evolution" class="nav-item"        data-section="evolution"> <span class="ni">🌊</span><span class="nt">Evolution</span></a></li>
+    <li><a href="#section-forecast"  class="nav-item"        data-section="forecast">  <span class="ni">🔮</span><span class="nt">Forecast</span></a></li>
+    <li><a href="#section-titles"    class="nav-item"        data-section="titles">    <span class="ni">🏆</span><span class="nt">Top Titles</span></a></li>
+    <li><a href="#section-insights"  class="nav-item"        data-section="insights">  <span class="ni">🧠</span><span class="nt">Insights</span></a></li>
+
+    <li><span class="nav-group-lbl">Real Netflix Data</span></li>
+    <li><a href="#section-engagement" class="nav-item"       data-section="engagement"><span class="ni">👑</span><span class="nt">Engagement</span></a></li>
+    <li><a href="#section-recommend"  class="nav-item"       data-section="recommend"> <span class="ni">🎯</span><span class="nt">Recommender</span></a></li>
+
+    <li><span class="nav-group-lbl">Output</span></li>
+    <li><a href="#section-export"    class="nav-item"        data-section="export">   <span class="ni">⬇️</span><span class="nt">Export Report</span></a></li>
+  </ul>
+  <div class="sidebar-footer">
+    <div class="cache-info" id="cacheInfo">
+      <span class="ci-dot"></span> Live data
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════════════════════════════════════ -->
+<main class="main-content">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle sidebar">☰</button>
+    <div class="topbar-title">Content Strategy Dashboard</div>
+    <div class="topbar-controls">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="titleSearch" type="text" placeholder="Search titles…" autocomplete="off"/>
+        <div id="searchDropdown" class="search-dropdown hidden"></div>
+      </div>
+      <div class="select-group">
+        <label for="countrySelect">🌍 Market</label>
+        <div class="select-wrap">
+          <select id="countrySelect">
+            <option value="All">🌐 All Countries</option>
+            {% for c in countries %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+          <span class="sel-arrow">▾</span>
+        </div>
+      </div>
+      <div id="loadSpinner" class="load-spinner hidden">
+        <div class="spin-ring"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── SECTION: KPI OVERVIEW ─────────────────────────────────────────── -->
+  <section class="page-section" id="section-kpis">
+    <div class="section-header">
+      <h2>📊 Market Overview</h2>
+      <span class="section-sub" id="marketLabel">All Countries</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card accent-red">
+        <div class="kpi-icon-wrap"><span>🎬</span></div>
+        <div class="kpi-body">
+          <div class="kpi-val" id="kv-total">—</div>
+          <div class="kpi-lbl">Total Titles</div>
+          <div class="kpi-sub" id="ks-total"></div>
+        </div>
+      </div>
+      <div class="kpi-card accent-gold">
+        <div class="kpi-icon-wrap"><span>⭐</span></div>
+        <div class="kpi-body">
+          <div class="kpi-val" id="kv-rating">—</div>
+          <div class="kpi-lbl">Avg Rating</div>
+          <div class="kpi-bar-wrap"><div class="kpi-bar" id="kb-rating"></div></div>
+        </div>
+      </div>
+      <div class="kpi-card accent-blue">
+        <div class="kpi-icon-wrap"><span>💰</span></div>
+        <div class="kpi-body">
+          <div class="kpi-val" id="kv-budget">—</div>
+          <div class="kpi-lbl">Avg Budget</div>
+          <div class="kpi-sub" id="ks-budget"></div>
+        </div>
+      </div>
+      <div class="kpi-card accent-green">
+        <div class="kpi-icon-wrap"><span>📈</span></div>
+        <div class="kpi-body">
+          <div class="kpi-val" id="kv-revenue">—</div>
+          <div class="kpi-lbl">Avg Revenue</div>
+          <div class="kpi-sub" id="ks-revenue"></div>
+        </div>
+      </div>
+      <div class="kpi-card accent-purple">
+        <div class="kpi-icon-wrap"><span>🔄</span></div>
+        <div class="kpi-body">
+          <div class="kpi-val" id="kv-roi">—</div>
+          <div class="kpi-lbl">Overall ROI</div>
+          <div class="kpi-sub" id="ks-roi"></div>
+        </div>
+      </div>
+      <div class="kpi-card accent-teal">
+        <div class="kpi-icon-wrap"><span>🗣️</span></div>
+        <div class="kpi-body">
+          <div class="kpi-val" id="kv-lang">—</div>
+          <div class="kpi-lbl">Top Language</div>
+          <div class="kpi-sub" id="ks-lang"></div>
+        </div>
+      </div>
+    </div>
+    <p class="data-note">Movie-market metadata used as an industry benchmark for content-strategy decisions — see <a href="#section-engagement">Real Netflix Data</a> for actual Netflix viewership.</p>
+  </section>
+
+  <!-- ── SECTION: GROWTH ───────────────────────────────────────────────── -->
+  <section class="page-section" id="section-growth">
+    <div class="section-header">
+      <h2>📅 Content Growth Over Time</h2>
+      <div class="section-tabs" id="growthTabs">
+        <button class="stab active" data-mode="count">Volume</button>
+        <button class="stab"        data-mode="rating">Avg Rating</button>
+      </div>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-meta" id="growthMeta"></div>
+      <div class="chart-body h300"><canvas id="growthChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: GENRES ───────────────────────────────────────────────── -->
+  <section class="page-section" id="section-genres">
+    <div class="section-header">
+      <h2>🎭 Genre Analysis</h2>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="chart-title">Top Genres by Volume</div>
+        <div class="chart-body h280"><canvas id="genresChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Genre Rating Comparison</div>
+        <div class="chart-body h280"><canvas id="genreRatingChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: ROI ──────────────────────────────────────────────────── -->
+  <section class="page-section" id="section-roi">
+    <div class="section-header">
+      <h2>💰 ROI by Segment</h2>
+      <div class="section-tabs" id="roiTabs">
+        <button class="stab active" data-mode="genre">By Genre</button>
+        <button class="stab"        data-mode="language">By Language</button>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="chart-title" id="roiChartTitle">ROI % by Genre</div>
+        <div class="chart-body h300"><canvas id="roiChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Budget vs Revenue by Year</div>
+        <div class="chart-meta" id="yearlyMeta"></div>
+        <div class="chart-body h280"><canvas id="yearlyChart"></canvas></div>
+      </div>
+    </div>
+    <div class="stat-test-bar" id="statTestBar"></div>
+  </section>
+
+  <!-- ── SECTION: CORRELATIONS ─────────────────────────────────────────── -->
+  <section class="page-section" id="section-corr">
+    <div class="section-header">
+      <h2>🔗 Correlation Matrix</h2>
+      <span class="section-sub">Pearson r between key metrics</span>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="chart-title">Heatmap</div>
+        <div class="chart-body h320"><canvas id="corrChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Rating Distribution</div>
+        <div class="chart-body h320"><canvas id="ratingsChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: LANGUAGES ────────────────────────────────────────────── -->
+  <section class="page-section" id="section-lang">
+    <div class="section-header">
+      <h2>🗣️ Language Intelligence</h2>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="chart-title">Language Distribution</div>
+        <div class="chart-body h280"><canvas id="langChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Country Content Volume (Top 15)</div>
+        <div class="chart-body h280"><canvas id="countryChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: BUDGET / REVENUE SCATTER ─────────────────────────────── -->
+  <section class="page-section" id="section-scatter">
+    <div class="section-header">
+      <h2>💎 Budget vs Revenue</h2>
+      <span class="section-sub" id="scatterMeta"></span>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-body h380"><canvas id="scatterChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: GENRE EVOLUTION ──────────────────────────────────────── -->
+  <section class="page-section" id="section-evolution">
+    <div class="section-header">
+      <h2>🌊 Genre Evolution</h2>
+      <span class="section-sub">Share % by time period</span>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-body h340"><canvas id="evolutionChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: FORECAST (NEW) ────────────────────────────────────────── -->
+  <section class="page-section" id="section-forecast">
+    <div class="section-header">
+      <h2>🔮 Content &amp; Revenue Forecast</h2>
+      <span class="section-sub">Linear trend, 80% confidence band</span>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="chart-title">Title Volume Forecast</div>
+        <div class="chart-meta" id="forecastVolMeta"></div>
+        <div class="chart-body h300"><canvas id="forecastVolChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Avg Revenue per Title Forecast ($M)</div>
+        <div class="chart-meta" id="forecastRevMeta"></div>
+        <div class="chart-body h300"><canvas id="forecastRevChart"></canvas></div>
+      </div>
+    </div>
+    <p class="data-note">Method: ordinary least-squares trendline through historical yearly aggregates. The shaded band is a naive ±80% interval from residual standard error — treat as directional, not a guarantee.</p>
+  </section>
+
+  <!-- ── SECTION: TOP TITLES ───────────────────────────────────────────── -->
+  <section class="page-section" id="section-titles">
+    <div class="section-header">
+      <h2>🏆 Top Titles by Popularity</h2>
+      <div class="table-controls">
+        <label>Sort by
+          <select id="tableSortSelect">
+            <option value="popularity">Popularity</option>
+            <option value="vote_average">Rating</option>
+            <option value="budget">Budget</option>
+            <option value="revenue">Revenue</option>
+            <option value="roi">ROI</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="topTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Title</th><th>Year</th>
+            <th>Rating</th><th>Popularity</th>
+            <th>Budget (M$)</th><th>Revenue (M$)</th><th>ROI %</th>
+            <th>Language</th><th>Genres</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── SECTION: INSIGHTS ─────────────────────────────────────────────── -->
+  <section class="page-section" id="section-insights">
+    <div class="section-header">
+      <h2>🧠 AI-Powered Insights</h2>
+      <span class="section-sub">Auto-generated from your market selection</span>
+    </div>
+    <div class="insights-grid" id="insightsGrid">
+      <!-- filled by JS -->
+    </div>
+  </section>
+
+  <!-- ── SECTION: REAL NETFLIX ENGAGEMENT (NEW) ─────────────────────────── -->
+  <section class="page-section" id="section-engagement">
+    <div class="section-header">
+      <h2>👑 Real Netflix Engagement</h2>
+      <span class="section-sub">Sourced from Netflix's official bi-annual "What We Watched" reports</span>
+    </div>
+
+    <div class="kpi-grid eng-kpi-grid" id="engKpiGrid">
+      <!-- filled by JS -->
+    </div>
+
+    <div class="two-col" style="margin-top:1rem">
+      <div class="chart-card">
+        <div class="section-header" style="margin-bottom:.6rem">
+          <div class="chart-title" style="margin-bottom:0">Most-Watched Titles</div>
+          <div class="section-tabs" id="engTopTabs">
+            <button class="stab active" data-metric="views">By Views</button>
+            <button class="stab"        data-metric="hours">By Hours</button>
+          </div>
+        </div>
+        <div id="engTopList" class="eng-top-list"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Total Views by Genre (Millions)</div>
+        <div class="chart-body h320"><canvas id="engGenreChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:1rem">
+      <div class="chart-card">
+        <div class="chart-title">Viewing Trend by Report Period</div>
+        <div class="chart-meta">Hours and views as published per half — Netflix doesn't publish both for every title</div>
+        <div class="chart-body h300"><canvas id="engTrendChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top Countries of Origin by Views</div>
+        <div class="chart-body h300"><canvas id="engCountryChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-header" style="margin-top:1.2rem">
+      <h2 style="font-size:.95rem">Engagement Insights</h2>
+    </div>
+    <div class="insights-grid" id="engInsightsGrid"></div>
+  </section>
+
+  <!-- ── SECTION: RECOMMENDER (NEW) ─────────────────────────────────────── -->
+  <section class="page-section" id="section-recommend">
+    <div class="section-header">
+      <h2>🎯 "Titles Like This" Recommender</h2>
+      <span class="section-sub">Content-based: TF-IDF over genre + synopsis + director, cosine similarity</span>
+    </div>
+    <div class="chart-card full recommend-card">
+      <div class="recommend-search-row">
+        <div class="search-wrap" style="flex:1">
+          <span class="search-icon">🎬</span>
+          <input id="recInput" type="text" placeholder="Type a movie title… e.g. Inception" autocomplete="off"/>
+        </div>
+        <button id="recButton" class="primary-btn">Find Similar</button>
+      </div>
+      <div class="seed-chips" id="seedChips"></div>
+      <div id="recResults" class="rec-results"></div>
+    </div>
+  </section>
+
+  <!-- ── SECTION: EXPORT (NEW) ──────────────────────────────────────────── -->
+  <section class="page-section" id="section-export">
+    <div class="section-header">
+      <h2>⬇️ Export Executive Report</h2>
+      <span class="section-sub" id="exportScopeLabel">Scope: All Countries</span>
+    </div>
+    <div class="export-grid">
+      <div class="export-card">
+        <div class="export-icon">📄</div>
+        <div class="export-title">PDF Executive Summary</div>
+        <div class="export-desc">KPIs, top insights, genre ROI table and top 10 titles for the current market selection — ready to share or print.</div>
+        <a id="exportPdfBtn" class="primary-btn" href="/api/export/pdf?country=All" download>Download PDF</a>
+      </div>
+      <div class="export-card">
+        <div class="export-icon">📊</div>
+        <div class="export-title">Excel Workbook</div>
+        <div class="export-desc">Multi-sheet workbook: KPIs, genre ROI (with chart), top 50 titles, and the real Netflix engagement dataset.</div>
+        <a id="exportExcelBtn" class="primary-btn" href="/api/export/excel?country=All" download>Download Excel</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    Netflix Content Strategy Analytics Pro · 22,000 movie-market titles · 170+ real engagement records
+    <span class="footer-sep">·</span>
+    Built with Flask + SQLite + scikit-learn + Chart.js
+  </footer>
+</main>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
