@@ -30,8 +30,8 @@ def create_app(config_class=Config) -> Flask:
     from core import database, recommender
 
     t0 = time.time()
-    # database.build_db(force=app.config["REBUILD_DB_ON_START"])
-    # recommender.build()
+    database.build_db(force=app.config["REBUILD_DB_ON_START"])
+    recommender.build()
     logger.info("Startup data pipeline ready in %.2fs", time.time() - t0)
 
     from api.market import bp as market_bp
